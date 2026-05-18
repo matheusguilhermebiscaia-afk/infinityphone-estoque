@@ -1,8 +1,0 @@
-node_modules/
-*.tar.gz
-*.zip
-*.log
-.venv/
-__pycache__/
-dist/
-build/
