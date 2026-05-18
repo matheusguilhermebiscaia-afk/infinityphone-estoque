@@ -1,5 +1,6 @@
 import os
-import psycopg2
+import psycopg
+from psycopg.rows import tuple_row
 from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
@@ -8,7 +9,7 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 def get_db():
     if not DATABASE_URL:
         raise Exception("DATABASE_URL não configurada nas Environment Variables da Vercel")
-    return psycopg2.connect(DATABASE_URL)
+    return psycopg.connect(DATABASE_URL, row_factory=tuple_row)
 
 def init_db():
     conn = get_db()
@@ -28,9 +29,12 @@ def init_db():
     cur.close()
     conn.close()
 
-@app.before_first_request
+@app.before_request
 def create_tables():
-    init_db()
+    # Vercel não tem before_first_request, usar before_request com flag
+    if not hasattr(app, 'db_initialized'):
+        init_db()
+        app.db_initialized = True
 
 @app.route('/')
 def index():
