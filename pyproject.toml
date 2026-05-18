@@ -1,0 +1,11 @@
+[project]
+name = "ativos-infinitos-api"
+version = "0.1.0"
+dependencies = [
+    "flask",
+    "psycopg[binary]",
+    "gunicorn"
+]
+
+[tool.uv]
+managed = false
