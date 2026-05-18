@@ -1,0 +1,53 @@
+Crie uma aplicação web completa chamada "INFINITYPHONE ESTOQUE" para controle de estoque de celulares com vitrine digital.
+
+IDENTIDADE VISUAL:
+- Nome: INFINITYPHONE ESTOQUE
+- Subtítulo: Assistência Técnica e Acessórios  
+- Logo: Usar o arquivo logo.png que será enviado na pasta static. Fundo preto, texto amarelo #D4FF00 e branco #FFFFFF.
+- Layout dark mode, responsivo para celular e computador, header com logo centralizada.
+
+BANCO DE DADOS:
+Usar SQLite com SQLAlchemy. Modelos:
+1. Produto: id, modelo, marca, cor, armazenamento_gb, ram_gb, preco_custo, preco_venda, status_novo_usado, data_cadastro
+2. Estoque: id, produto_id FK, loja_numero 1/2/3, quantidade
+3. Movimentacao: id, produto_id FK, loja_numero, tipo "entrada" ou "saida", quantidade, data, observacao
+
+FUNCIONALIDADES:
+
+1. DASHBOARD / VITRINE DIGITAL
+- Página inicial pública onde as 3 lojas podem consultar
+- Cards de cada produto mostrando: modelo, imagem placeholder, cor, armazenamento, RAM, preço venda
+- Badge mostrando estoque total e estoque por loja: "Loja 1: 3 | Loja 2: 0 | Loja 3: 1"
+- Filtros por: modelo, marca, faixa de preço, disponibilidade em cada loja
+- Ordenar por: mais recentes chegados, menor estoque, preço
+- Destaque "Chegaram hoje" para produtos com movimentação de entrada nas últimas 24h
+
+2. PAINEL ADMIN
+- Login simples com senha única definida em .env
+- Cadastro de produtos: modelo, marca, cor, armazenamento, RAM, preços, status
+- Entrada de estoque: selecionar produto, escolher loja 1/2/3, quantidade, motivo
+- Saída/Venda: selecionar produto, escolher loja, quantidade, baixa automática
+- Histórico de movimentações por produto e por loja
+- Alerta de estoque baixo: produtos com quantidade <= 2 em alguma loja
+
+3. RELATÓRIOS
+- O que chegou nos últimos 7 dias
+- O que foi vendido nos últimos 7 dias por loja
+- Produtos sem estoque em nenhuma loja
+- Valor total em estoque por loja
+
+REQUISITOS TÉCNICOS:
+- Flask + SQLAlchemy + Flask-Login para admin
+- Templates Jinja2 com Bootstrap 5 dark theme
+- CSS custom usando #000 fundo, #D4FF00 detalhes, #FFFFFF texto
+- Upload da logo em static/logo.png
+- Rotas: /, /admin/login, /admin/dashboard, /admin/produto/novo, /admin/entrada, /admin/saida, /api/estoque
+- API JSON em /api/estoque para futuras integrações
+- Deploy ready para Replit com gunicorn
+- Arquivo .env para SECRET_KEY e ADMIN_PASSWORD
+
+ESTRUTURA INICIAL:
+Gere app.py, models.py, templates/ base.html index.html admin.html, static/style.css
+Preencha com dados exemplo de 5 modelos de celular para teste.
+
+A aplicação deve ser simples de usar no celular, com botões grandes e carregamento rápido. Foco em consulta rápida de estoque pelas 3 lojas.

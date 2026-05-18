@@ -1,0 +1,53 @@
+ADICIONAR FUNCIONALIDADES: Configurações de Loja + Imagens de Produtos no INFINITYPHONE ESTOQUE
+
+1. TABELA DE CONFIGURAÇÕES DE LOJA
+Crie uma nova tabela ConfigLoja no banco:
+- id, numero_loja INTEGER 1/2/3, nome_loja VARCHAR, endereco VARCHAR, telefone VARCHAR
+
+Crie rota /admin/configuracoes e página:
+- Formulário com 3 seções: Loja 1, Loja 2, Loja 3
+- Cada seção tem: input "Nome da Loja", "Endereço", "Telefone"
+- Botão "Salvar Configurações"
+- Ao salvar, atualiza os 3 registros. Se não existir, cria.
+
+2. TROCAR "LOJA 1, 2, 3" PELO NOME CADASTRADO
+Em toda a aplicação onde aparece "Loja 1", "Loja 2", "Loja 3":
+- Faça join com tabela ConfigLoja e mostre nome_loja
+- Se nome_loja estiver vazio, manter "Loja 1" como fallback
+- Dashboard, Vitrine, Histórico, Relatórios devem usar o nome
+
+3. IMAGEM DE PRODUTO NA VITRINE
+Altere tabela Produto:
+- Adicione campo imagem_url VARCHAR
+- Adicione campo imagem_file VARCHAR para upload local
+
+Atualize cadastro de produto /admin/produto/novo:
+- Adicione input file "Imagem do Aparelho" aceitando JPG/PNG
+- Adicione input text "URL da Imagem" para colar link direto
+- Prioridade: se imagem_file existir usa ela, senão usa imagem_url
+
+Upload:
+- Salvar arquivos em /static/produtos/
+- Gerar nome único: produto_id + timestamp + .jpg
+- Validar tamanho max 5MB
+
+4. VITRINE PÚBLICA COM IMAGEM
+Em templates/index.html:
+- No card do produto, adicione <img src="/static/produtos/{{produto.imagem_file}}" />
+- Se imagem_file vazio, usar imagem_url
+- Se ambos vazios, usar placeholder padrão /static/placeholder.png
+- Imagem com aspect-ratio 1:1, object-fit: cover, bordas arredondadas
+- Layout grid responsivo: 2 colunas no celular, 4 no desktop
+
+5. EXEMPLO CASAS BAHIA
+Na tela de cadastro, adicione helper text:
+"Ex: Copie a URL da imagem do produto no site Casas Bahia, Magazine Luiza, etc. 
+Ex: https://a-static.mlcdn.com.br/800x560/celular-samsung-galaxy-a54-5g..."
+
+Crie placeholder.png em static/ com fundo #222 e texto "Sem Imagem" em #D4FF00
+
+6. MIGRAÇÃO
+Rode db.create_all() ou comando de migração para adicionar campos novos sem apagar dados.
+
+ESTILO:
+Seguir dark theme existente #000 fundo, #D4FF00 detalhes, #FFFFFF texto.

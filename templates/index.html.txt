@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>InfinityPhone</title>
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 900px; margin: auto; background: #f0f2f5; }
+       .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        input, button { padding: 12px; margin: 5px 0; width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #1877f2; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background: #166fe5; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background: #1877f2; color: white; }
+        h1, h3 { color: #1877f2; }
+       .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        @media (max-width: 600px) {.form-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>InfinityPhone - Sistema de Estoque</h1>
+        <h3>Cadastrar Produto</h3>
+        <form action="/cadastrar" method="POST" class="form-grid">
+            <input name="modelo" placeholder="Modelo do aparelho" required>
+            <input name="imei" placeholder="IMEI">
+            <input name="preco_compra" type="number" step="0.01" placeholder="Preço de compra">
+            <input name="preco_venda" type="number" step="0.01" placeholder="Preço de venda">
+            <input name="quantidade" type="number" placeholder="Quantidade" value="1">
+            <button type="submit">Cadastrar</button>
+        </form>
+        <h3>Estoque Atual</h3>
+        <table>
+            <tr><th>ID</th><th>Modelo</th><th>IMEI</th><th>Compra</th><th>Venda</th><th>Qtd</th></tr>
+            {% for p in produtos %}
+            <tr>
+                <td>{{ p[0] }}</td>
+                <td>{{ p[1] }}</td>
+                <td>{{ p[2] or '-' }}</td>
+                <td>R$ {{ "%.2f"|format(p[3] or 0) }}</td>
+                <td>R$ {{ "%.2f"|format(p[4] or 0) }}</td>
+                <td>{{ p[5] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+</html>

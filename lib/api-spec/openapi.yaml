@@ -1,0 +1,702 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: INFINITYPHONE ESTOQUE - Phone inventory management API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Admin authentication
+  - name: produtos
+    description: Product management
+  - name: estoque
+    description: Stock management
+  - name: movimentacoes
+    description: Stock movement history
+  - name: relatorios
+    description: Reports
+  - name: config-lojas
+    description: Store configuration
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: adminLogin
+      tags: [auth]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthStatus"
+        "401":
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      operationId: adminLogout
+      tags: [auth]
+      summary: Admin logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthStatus"
+
+  /auth/me:
+    get:
+      operationId: getAuthStatus
+      tags: [auth]
+      summary: Get current auth status
+      responses:
+        "200":
+          description: Auth status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthStatus"
+
+  /produtos:
+    get:
+      operationId: listProdutos
+      tags: [produtos]
+      summary: List all products with stock info
+      parameters:
+        - in: query
+          name: marca
+          schema:
+            type: string
+          description: Filter by brand
+        - in: query
+          name: modelo
+          schema:
+            type: string
+          description: Filter by model (partial match)
+        - in: query
+          name: precoMin
+          schema:
+            type: number
+          description: Minimum price filter
+        - in: query
+          name: precoMax
+          schema:
+            type: number
+          description: Maximum price filter
+        - in: query
+          name: loja
+          schema:
+            type: integer
+          description: Filter by store availability (1, 2, or 3)
+        - in: query
+          name: ordenar
+          schema:
+            type: string
+            enum: [recentes, menor_estoque, preco_asc, preco_desc]
+          description: Sort order
+        - in: query
+          name: chegaram_hoje
+          schema:
+            type: boolean
+          description: Filter products that arrived today
+      responses:
+        "200":
+          description: List of products with stock
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProdutoComEstoque"
+
+    post:
+      operationId: createProduto
+      tags: [produtos]
+      summary: Create a new product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProdutoInput"
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Produto"
+
+  /produtos/{id}:
+    get:
+      operationId: getProduto
+      tags: [produtos]
+      summary: Get a product by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product details with stock
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProdutoComEstoque"
+        "404":
+          description: Not found
+
+    patch:
+      operationId: updateProduto
+      tags: [produtos]
+      summary: Update a product
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProdutoUpdate"
+      responses:
+        "200":
+          description: Updated product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Produto"
+        "404":
+          description: Not found
+
+    delete:
+      operationId: deleteProduto
+      tags: [produtos]
+      summary: Delete a product
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /movimentacoes:
+    get:
+      operationId: listMovimentacoes
+      tags: [movimentacoes]
+      summary: List stock movements
+      parameters:
+        - in: query
+          name: produtoId
+          schema:
+            type: integer
+          description: Filter by product ID
+        - in: query
+          name: loja
+          schema:
+            type: integer
+          description: Filter by store (1, 2, or 3)
+        - in: query
+          name: tipo
+          schema:
+            type: string
+            enum: [entrada, saida]
+          description: Filter by movement type
+      responses:
+        "200":
+          description: List of movements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Movimentacao"
+
+    post:
+      operationId: createMovimentacao
+      tags: [movimentacoes]
+      summary: Create a stock movement (entry or exit)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MovimentacaoInput"
+      responses:
+        "201":
+          description: Movement created and stock updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Movimentacao"
+        "400":
+          description: Invalid request (e.g. insufficient stock)
+
+  /relatorios/entradas-recentes:
+    get:
+      operationId: getEntradasRecentes
+      tags: [relatorios]
+      summary: Products that arrived in the last 7 days
+      responses:
+        "200":
+          description: Recent entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RelatorioEntrada"
+
+  /relatorios/vendas-recentes:
+    get:
+      operationId: getVendasRecentes
+      tags: [relatorios]
+      summary: Sales in the last 7 days by store
+      responses:
+        "200":
+          description: Recent sales
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RelatorioVenda"
+
+  /relatorios/sem-estoque:
+    get:
+      operationId: getProdutosSemEstoque
+      tags: [relatorios]
+      summary: Products with no stock in any store
+      responses:
+        "200":
+          description: Out-of-stock products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Produto"
+
+  /relatorios/valor-por-loja:
+    get:
+      operationId: getValorPorLoja
+      tags: [relatorios]
+      summary: Total stock value per store
+      responses:
+        "200":
+          description: Stock value per store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ValorLoja"
+
+  /relatorios/estoque-baixo:
+    get:
+      operationId: getEstoqueBaixo
+      tags: [relatorios]
+      summary: Products with low stock (quantity <= 2) in any store
+      responses:
+        "200":
+          description: Low stock alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AlertaEstoque"
+
+  /relatorios/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [relatorios]
+      summary: Dashboard summary stats
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /config-lojas:
+    get:
+      operationId: getConfigLojas
+      tags: [config-lojas]
+      summary: Get all store configurations
+      responses:
+        "200":
+          description: Store configs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConfigLoja"
+    put:
+      operationId: updateConfigLojas
+      tags: [config-lojas]
+      summary: Upsert all store configurations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigLojasInput"
+      responses:
+        "200":
+          description: Updated configs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConfigLoja"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    LoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AuthStatus:
+      type: object
+      required: [authenticated]
+      properties:
+        authenticated:
+          type: boolean
+
+    Produto:
+      type: object
+      required: [id, modelo, marca, cor, armazenamentoGb, ramGb, precoCusto, precoVenda, statusNovoUsado, dataCadastro]
+      properties:
+        id:
+          type: integer
+        modelo:
+          type: string
+        marca:
+          type: string
+        cor:
+          type: string
+        armazenamentoGb:
+          type: integer
+        ramGb:
+          type: integer
+        precoCusto:
+          type: number
+        precoVenda:
+          type: number
+        statusNovoUsado:
+          type: string
+          enum: [novo, usado]
+        dataCadastro:
+          type: string
+          format: date-time
+        imagemUrl:
+          type: ["string", "null"]
+        imagemFile:
+          type: ["string", "null"]
+
+    ProdutoInput:
+      type: object
+      required: [modelo, marca, cor, armazenamentoGb, ramGb, precoCusto, precoVenda, statusNovoUsado]
+      properties:
+        modelo:
+          type: string
+        marca:
+          type: string
+        cor:
+          type: string
+        armazenamentoGb:
+          type: integer
+        ramGb:
+          type: integer
+        precoCusto:
+          type: number
+        precoVenda:
+          type: number
+        statusNovoUsado:
+          type: string
+          enum: [novo, usado]
+        imagemUrl:
+          type: string
+
+    ProdutoUpdate:
+      type: object
+      properties:
+        modelo:
+          type: string
+        marca:
+          type: string
+        cor:
+          type: string
+        armazenamentoGb:
+          type: integer
+        ramGb:
+          type: integer
+        precoCusto:
+          type: number
+        precoVenda:
+          type: number
+        statusNovoUsado:
+          type: string
+          enum: [novo, usado]
+        imagemUrl:
+          type: string
+
+    EstoquePorLoja:
+      type: object
+      required: [lojaNumero, quantidade]
+      properties:
+        lojaNumero:
+          type: integer
+        quantidade:
+          type: integer
+        nomeLoja:
+          type: ["string", "null"]
+
+    ProdutoComEstoque:
+      type: object
+      required: [id, modelo, marca, cor, armazenamentoGb, ramGb, precoCusto, precoVenda, statusNovoUsado, dataCadastro, estoqueTotal, estoquePorLoja, chegouHoje]
+      properties:
+        id:
+          type: integer
+        modelo:
+          type: string
+        marca:
+          type: string
+        cor:
+          type: string
+        armazenamentoGb:
+          type: integer
+        ramGb:
+          type: integer
+        precoCusto:
+          type: number
+        precoVenda:
+          type: number
+        statusNovoUsado:
+          type: string
+          enum: [novo, usado]
+        dataCadastro:
+          type: string
+          format: date-time
+        estoqueTotal:
+          type: integer
+        estoquePorLoja:
+          type: array
+          items:
+            $ref: "#/components/schemas/EstoquePorLoja"
+        chegouHoje:
+          type: boolean
+        imagemUrl:
+          type: ["string", "null"]
+        imagemFile:
+          type: ["string", "null"]
+
+    ConfigLoja:
+      type: object
+      required: [lojaNumero]
+      properties:
+        id:
+          type: integer
+        lojaNumero:
+          type: integer
+        nomeLoja:
+          type: string
+        endereco:
+          type: string
+        telefone:
+          type: string
+
+    ConfigLojasInput:
+      type: object
+      required: [lojas]
+      properties:
+        lojas:
+          type: array
+          items:
+            type: object
+            required: [lojaNumero]
+            properties:
+              lojaNumero:
+                type: integer
+              nomeLoja:
+                type: string
+              endereco:
+                type: string
+              telefone:
+                type: string
+
+    UploadImagemResponse:
+      type: object
+      required: [imagemFile, url]
+      properties:
+        imagemFile:
+          type: string
+        url:
+          type: string
+
+    Movimentacao:
+      type: object
+      required: [id, produtoId, produtoModelo, produtoMarca, lojaNumero, tipo, quantidade, data]
+      properties:
+        id:
+          type: integer
+        produtoId:
+          type: integer
+        produtoModelo:
+          type: string
+        produtoMarca:
+          type: string
+        lojaNumero:
+          type: integer
+        tipo:
+          type: string
+          enum: [entrada, saida]
+        quantidade:
+          type: integer
+        data:
+          type: string
+          format: date-time
+        observacao:
+          type: ["string", "null"]
+
+    MovimentacaoInput:
+      type: object
+      required: [produtoId, lojaNumero, tipo, quantidade]
+      properties:
+        produtoId:
+          type: integer
+        lojaNumero:
+          type: integer
+          enum: [1, 2, 3]
+        tipo:
+          type: string
+          enum: [entrada, saida]
+        quantidade:
+          type: integer
+          minimum: 1
+        observacao:
+          type: string
+
+    RelatorioEntrada:
+      type: object
+      required: [produtoId, modelo, marca, lojaNumero, quantidade, data]
+      properties:
+        produtoId:
+          type: integer
+        modelo:
+          type: string
+        marca:
+          type: string
+        lojaNumero:
+          type: integer
+        quantidade:
+          type: integer
+        data:
+          type: string
+          format: date-time
+
+    RelatorioVenda:
+      type: object
+      required: [lojaNumero, totalVendas, totalQuantidade]
+      properties:
+        lojaNumero:
+          type: integer
+        totalVendas:
+          type: integer
+        totalQuantidade:
+          type: integer
+
+    ValorLoja:
+      type: object
+      required: [lojaNumero, valorTotal, quantidadeTotal]
+      properties:
+        lojaNumero:
+          type: integer
+        valorTotal:
+          type: number
+        quantidadeTotal:
+          type: integer
+
+    AlertaEstoque:
+      type: object
+      required: [produtoId, modelo, marca, lojaNumero, quantidade]
+      properties:
+        produtoId:
+          type: integer
+        modelo:
+          type: string
+        marca:
+          type: string
+        lojaNumero:
+          type: integer
+        quantidade:
+          type: integer
+
+    DashboardStats:
+      type: object
+      required: [totalProdutos, totalItensEmEstoque, alertasEstoqueBaixo, entradasHoje, saidasHoje]
+      properties:
+        totalProdutos:
+          type: integer
+        totalItensEmEstoque:
+          type: integer
+        alertasEstoqueBaixo:
+          type: integer
+        entradasHoje:
+          type: integer
+        saidasHoje:
+          type: integer
