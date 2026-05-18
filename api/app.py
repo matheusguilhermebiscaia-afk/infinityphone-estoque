@@ -6,6 +6,8 @@ app = Flask(__name__)
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db():
+    if not DATABASE_URL:
+        raise Exception("DATABASE_URL não configurada nas Environment Variables da Vercel")
     return psycopg2.connect(DATABASE_URL)
 
 def init_db():
@@ -25,6 +27,10 @@ def init_db():
     conn.commit()
     cur.close()
     conn.close()
+
+@app.before_first_request
+def create_tables():
+    init_db()
 
 @app.route('/')
 def index():
@@ -54,7 +60,3 @@ def cadastrar():
     cur.close()
     conn.close()
     return redirect(url_for('index'))
-
-if __name__ == '__main__':
-    init_db()
-    app.run(debug=True)
