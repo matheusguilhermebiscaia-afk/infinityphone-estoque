@@ -1,4 +1,3 @@
 flask
+psycopg[binary]
 gunicorn
-psycopg2-binary
-python-dotenv
